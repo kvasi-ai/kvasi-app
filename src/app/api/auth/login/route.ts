@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { makeSessionToken, SESSION_COOKIE } from "@/lib/auth";
 
+export const runtime = "edge";
+
 export async function POST(req: Request) {
   const { password } = (await req.json()) as { password?: string };
   const expected = process.env.APP_PASSWORD;
@@ -13,7 +15,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Wrong password" }, { status: 401 });
   }
 
-  const token = makeSessionToken(secret);
+  const token = await makeSessionToken(secret);
   const res = NextResponse.json({ ok: true });
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
