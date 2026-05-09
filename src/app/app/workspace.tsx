@@ -1,5 +1,6 @@
 "use client";
 import * as React from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { KINDS, AMOUNTS, LOCATIONS } from "@/lib/programs-data";
 import type { Program } from "@/lib/hooks/use-programs";
 import { TimelineView } from "@/components/views/timeline-view";
@@ -8,6 +9,7 @@ import { BoardView } from "@/components/views/board-view";
 import { Button } from "@/components/ui/button";
 import { LayoutGrid, ListIcon, GanttChart, Filter, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ProgramDetailSheet, type ProgramDetail } from "@/components/detail/program-detail";
 
 type View = "timeline" | "list" | "board";
 
@@ -16,20 +18,35 @@ const TIERS = [
   { value: "2", label: "Tier 2 · Q3",    tone: "warning" as const },
   { value: "3", label: "Tier 3 · Defer", tone: "warm" as const },
 ];
-
 const DILUTIONS = [
   { value: "non",      label: "Non-dilutive" },
   { value: "dilutive", label: "Equity" },
   { value: "zero",     label: "Equity-free" },
 ];
-
 const VISAS = [
   { value: "open",  label: "No gate" },
   { value: "gated", label: "US-citizen req." },
 ];
 
-export function Workspace({ programs }: { programs: Program[] }) {
+type ProgramWithMeta = Program & { metadata?: Record<string, unknown> | null };
+
+export function Workspace({ programs }: { programs: ProgramWithMeta[] }) {
+  const sp = useSearchParams();
+  const router = useRouter();
   const [view, setView] = React.useState<View>("timeline");
+
+  // open detail panel via ?open=slug query (from sidebar/inbox/today links)
+  const openSlug = sp.get("open");
+  const setOpenSlug = React.useCallback(
+    (slug: string | null) => {
+      const next = new URLSearchParams(sp.toString());
+      if (slug) next.set("open", slug);
+      else next.delete("open");
+      router.replace(`?${next.toString()}`, { scroll: false });
+    },
+    [sp, router],
+  );
+
   const [filters, setFilters] = React.useState<{
     tier: Set<string>;
     kind: Set<string>;
@@ -78,14 +95,39 @@ export function Workspace({ programs }: { programs: Program[] }) {
   const counts = { 1: 0, 2: 0, 3: 0 } as Record<number, number>;
   filtered.forEach((p) => (counts[p.tier] = (counts[p.tier] ?? 0) + 1));
 
+  const openProgram = React.useMemo(() => {
+    if (!openSlug) return null;
+    const p = programs.find((x) => x.slug === openSlug);
+    if (!p) return null;
+    const detail: ProgramDetail = {
+      id: p.id,
+      slug: p.slug,
+      name: p.name,
+      org: p.org,
+      tier: p.tier,
+      kind: p.kind,
+      dilution: p.dilution,
+      visa: p.visa,
+      loc: p.loc,
+      amount: p.amount,
+      terms: p.terms ?? null,
+      note: p.note ?? null,
+      start_date: p.start_date ?? null,
+      end_date: p.end_date ?? null,
+      point_date: p.point_date ?? null,
+      rolling: p.rolling,
+      metadata: p.metadata ?? null,
+      current_status: p.current_status ?? "discovered",
+    };
+    return detail;
+  }, [openSlug, programs]);
+
   return (
     <div className="px-6 py-6 max-w-[1600px]">
       <div className="flex items-end justify-between gap-4 mb-6">
         <div>
           <div className="text-[10.5px] tracking-[0.14em] uppercase text-[var(--color-ink-3)] mb-2">Workspace</div>
-          <h1 className="font-[family-name:var(--font-display)] text-[44px] leading-[1.02] tracking-[-0.02em] font-medium">
-            Programs
-          </h1>
+          <h1 className="font-[family-name:var(--font-display)] text-[44px] leading-[1.02] tracking-[-0.02em] font-medium">Programs</h1>
           <p className="text-[13px] text-[var(--color-ink-2)] mt-1.5">
             <span className="tabular-nums font-semibold text-[var(--color-ink)]">{filtered.length}</span> of{" "}
             <span className="tabular-nums">{programs.length}</span> programs ·{" "}
@@ -139,19 +181,19 @@ export function Workspace({ programs }: { programs: Program[] }) {
           <Button variant="ghost" onClick={reset} className="mt-3">Reset filters</Button>
         </div>
       ) : view === "timeline" ? (
-        <TimelineView programs={filtered} />
+        <TimelineView programs={filtered} onOpen={(slug) => setOpenSlug(slug)} />
       ) : view === "board" ? (
-        <BoardView programs={filtered} />
+        <BoardView programs={filtered} onOpen={(slug) => setOpenSlug(slug)} />
       ) : (
-        <ListView programs={filtered} />
+        <ListView programs={filtered} onOpen={(slug) => setOpenSlug(slug)} />
       )}
+
+      <ProgramDetailSheet open={!!openSlug} onClose={() => setOpenSlug(null)} program={openProgram} />
     </div>
   );
 }
 
-function ViewBtn({
-  current, v, onClick, children, icon,
-}: {
+function ViewBtn({ current, v, onClick, children, icon }: {
   current: View; v: View; onClick: (v: View) => void; children: React.ReactNode; icon: React.ReactNode;
 }) {
   const on = current === v;
@@ -163,15 +205,12 @@ function ViewBtn({
         on ? "bg-[var(--color-ink)] text-[var(--color-paper)]" : "text-[var(--color-ink-2)] hover:text-[var(--color-ink)]",
       )}
     >
-      {icon}
-      {children}
+      {icon}{children}
     </button>
   );
 }
 
-function FilterChips({
-  items, sel, onToggle,
-}: {
+function FilterChips({ items, sel, onToggle }: {
   items: readonly { value: string; label: string; tone?: "accent" | "warning" | "warm" }[];
   sel: Set<string>;
   onToggle: (v: string) => void;

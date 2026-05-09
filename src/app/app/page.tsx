@@ -4,11 +4,13 @@ import type { Program } from "@/lib/hooks/use-programs";
 
 export const dynamic = "force-dynamic";
 
+type ProgramWithMeta = Program & { metadata: Record<string, unknown> | null };
+
 export default async function WorkspacePage() {
   const supa = admin();
   const { data, error } = await supa
     .from("programs")
-    .select("*, status:program_status(status, changed_at)")
+    .select("*, status:program_status(status, changed_at), metadata")
     .order("tier", { ascending: true });
 
   if (error) {
@@ -16,9 +18,6 @@ export default async function WorkspacePage() {
       <div className="px-6 py-10 max-w-2xl">
         <h2 className="font-[family-name:var(--font-display)] text-3xl mb-3">Database not ready</h2>
         <pre className="text-[12px] text-[var(--color-error)] bg-[var(--color-error-soft)] p-3 rounded-lg overflow-auto">{error.message}</pre>
-        <p className="text-[13px] text-[var(--color-ink-2)] mt-3">
-          Run the schema in the Supabase SQL editor, then refresh.
-        </p>
       </div>
     );
   }
@@ -29,10 +28,11 @@ export default async function WorkspacePage() {
     amount: string | null; terms: string | null; note: string | null;
     start_date: string | null; end_date: string | null; point_date: string | null;
     rolling: boolean;
+    metadata: Record<string, unknown> | null;
     status?: { status: string; changed_at: string }[];
   };
 
-  const programs: Program[] = (data as unknown as Row[] | null ?? []).map((p) => {
+  const programs: ProgramWithMeta[] = (data as unknown as Row[] | null ?? []).map((p) => {
     const statuses = p.status ?? [];
     const latest = statuses.sort((a, b) => +new Date(b.changed_at) - +new Date(a.changed_at))[0];
     return {
@@ -52,6 +52,7 @@ export default async function WorkspacePage() {
       end_date: p.end_date ?? undefined,
       point_date: p.point_date ?? undefined,
       rolling: p.rolling,
+      metadata: p.metadata,
       current_status: latest?.status ?? "discovered",
     };
   });
