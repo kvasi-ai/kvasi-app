@@ -11,7 +11,7 @@ export default function Home() {
           <span className="text-[13px] font-semibold tracking-tight">KVASI</span>
         </div>
         <Button asChild variant="primary" size="md">
-          <Link href="/app">
+          <Link href="/login">
             Sign in <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
         </Button>
@@ -32,7 +32,7 @@ export default function Home() {
           </p>
           <div className="flex items-center justify-center gap-3">
             <Button asChild variant="accent" size="lg">
-              <Link href="/app">Enter workspace</Link>
+              <Link href="/login">Enter workspace</Link>
             </Button>
             <Button asChild variant="ghost" size="lg">
               <a href="https://github.com/kvasi-ai/capital-calendar" target="_blank" rel="noreferrer">

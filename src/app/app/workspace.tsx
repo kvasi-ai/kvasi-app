@@ -1,6 +1,7 @@
 "use client";
 import * as React from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { KINDS, AMOUNTS, LOCATIONS } from "@/lib/programs-data";
 import type { Program } from "@/lib/hooks/use-programs";
 import { TimelineView } from "@/components/views/timeline-view";
@@ -34,9 +35,29 @@ export function Workspace({ programs }: { programs: ProgramWithMeta[] }) {
   const sp = useSearchParams();
   const router = useRouter();
   const [view, setView] = React.useState<View>("timeline");
+  const [legendRef] = useAutoAnimate<HTMLDivElement>();
 
   // open detail panel via ?open=slug query (from sidebar/inbox/today links)
   const openSlug = sp.get("open");
+
+  // sync filter state from query params (from command palette deep-links)
+  React.useEffect(() => {
+    const next = {
+      tier: new Set<string>(),
+      kind: new Set<string>(),
+      dilution: new Set<string>(),
+      visa: new Set<string>(),
+      loc: new Set<string>(),
+      amount: new Set<string>(),
+      status: new Set<string>(),
+    };
+    (["tier", "kind", "dilution", "visa", "loc", "amount", "status"] as const).forEach((key) => {
+      const v = sp.get(key);
+      if (v) v.split(",").forEach((x) => next[key].add(x));
+    });
+    setFilters(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sp.toString()]);
   const setOpenSlug = React.useCallback(
     (slug: string | null) => {
       const next = new URLSearchParams(sp.toString());
@@ -171,7 +192,7 @@ export function Workspace({ programs }: { programs: ProgramWithMeta[] }) {
         </div>
       </div>
 
-      <div className="flex items-center gap-5 text-[10.5px] text-[var(--color-ink-3)] mb-3 px-1 flex-wrap">
+      <div ref={legendRef} className="flex items-center gap-5 text-[10.5px] text-[var(--color-ink-3)] mb-3 px-1 flex-wrap">
         <Lg sw="bg-[var(--color-accent-500)]">Tier 1 — apply within 30 days</Lg>
         <Lg sw="bg-[var(--color-warning)]">Tier 2 — apply Q3 2026</Lg>
         <Lg sw="bg-[var(--color-ink-3)]">Tier 3 — deferred</Lg>

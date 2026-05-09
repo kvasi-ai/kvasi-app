@@ -68,6 +68,20 @@ export default function SettingsPage() {
         </div>
       </Section>
 
+      <Section
+        label="Workspace password"
+        desc="Shared password gates all access. To change it, edit the APP_PASSWORD env var in Vercel and redeploy."
+      >
+        <a
+          href="https://vercel.com/zoreanujs-projects/kvasi-app/settings/environment-variables"
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-md border border-[var(--color-line)] bg-[var(--color-paper-2)] px-3 py-2 text-[12.5px] hover:border-[var(--color-warm-400)]"
+        >
+          Open Vercel env vars <ExternalLink className="h-3 w-3" />
+        </a>
+      </Section>
+
       <Section label="Session">
         <Button variant="outline" onClick={logout}>
           <LogOut className="h-3.5 w-3.5" /> Sign out

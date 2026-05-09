@@ -3,6 +3,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createBrowserClient } from "@supabase/ssr";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { format, isPast, isToday, isTomorrow } from "date-fns";
 import {
   Plus, Trash2, Calendar, Circle, CheckCircle2, Pencil, X, Save, ChevronDown,
@@ -34,6 +35,7 @@ function makeSupa() {
 export function TodosClient({ programs }: { programs: ProgramOpt[] }) {
   const supa = React.useMemo(makeSupa, []);
   const qc = useQueryClient();
+  const [listRef] = useAutoAnimate<HTMLUListElement>();
 
   const { data: todos = [] } = useQuery({
     queryKey: ["todos", "all"],
@@ -118,7 +120,7 @@ export function TodosClient({ programs }: { programs: ProgramOpt[] }) {
         <>
           {open.length > 0 && (
             <Section label={`Open · ${open.length}`} tone="default">
-              <ul className="rounded-xl border border-[var(--color-line)] bg-[var(--color-paper-2)] divide-y divide-[var(--color-line)]">
+              <ul ref={listRef} className="rounded-xl border border-[var(--color-line)] bg-[var(--color-paper-2)] divide-y divide-[var(--color-line)]">
                 {open.map((t) => (
                   <Row
                     key={t.id}
