@@ -1,0 +1,10 @@
+-- ─────────────────────────────────────────────────────────────────────
+-- KVASI seed data — 60 programs.
+-- Run AFTER schema.sql.
+-- ─────────────────────────────────────────────────────────────────────
+-- This is a placeholder; the actual seed runs from /api/seed (server)
+-- using SEED_PROGRAMS in src/lib/programs-data.ts. Reason: keeps a single
+-- source of truth in TS so dev can edit without touching SQL.
+--
+-- To trigger seeding once after deploy:
+--   curl -X POST https://your-app.pages.dev/api/seed -H "x-seed-key: $SEED_KEY"
