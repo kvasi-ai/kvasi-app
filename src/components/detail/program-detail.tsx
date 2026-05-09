@@ -243,11 +243,13 @@ export function ProgramDetailSheet({
                 <p className="text-[13.5px] leading-relaxed">{program.terms}</p>
               </Section>
             )}
-            {program.note && (
-              <Section label="Strategy note">
-                <p className="text-[13.5px] leading-relaxed text-[var(--color-ink-2)]">{program.note}</p>
-              </Section>
-            )}
+            <Section label="Strategy note">
+              <EditableNote
+                programId={program.id}
+                initial={program.note ?? ""}
+                onSaved={() => qc.invalidateQueries({ queryKey: ["programs"] })}
+              />
+            </Section>
 
             {/* tips */}
             {!!meta.tips?.length && (
@@ -308,6 +310,54 @@ export function ProgramDetailSheet({
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
+  );
+}
+
+function EditableNote({ programId, initial, onSaved }: { programId: string; initial: string; onSaved: () => void }) {
+  const supa = React.useMemo(() => createClient(), []);
+  const [editing, setEditing] = React.useState(false);
+  const [val, setVal] = React.useState(initial);
+  React.useEffect(() => setVal(initial), [initial]);
+
+  async function save() {
+    const next = val.trim();
+    if (next === initial.trim()) { setEditing(false); return; }
+    const { error } = await supa.from("programs").update({ note: next }).eq("id", programId);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Note saved");
+    setEditing(false);
+    onSaved();
+  }
+
+  if (editing) {
+    return (
+      <div>
+        <textarea
+          autoFocus
+          rows={4}
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          onKeyDown={(e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") save();
+            if (e.key === "Escape") { setVal(initial); setEditing(false); }
+          }}
+          className="w-full resize-none rounded-md border border-[var(--color-line)] bg-[var(--color-paper-2)] px-2.5 py-2 text-[13.5px] leading-relaxed outline-none focus:border-[var(--color-accent-500)]"
+        />
+        <div className="mt-1.5 flex justify-end gap-1.5">
+          <button onClick={() => { setVal(initial); setEditing(false); }} className="text-[11.5px] text-[var(--color-ink-3)] hover:text-[var(--color-ink)] px-2 py-1">Cancel</button>
+          <button onClick={save} className="text-[11.5px] text-white bg-[var(--color-accent-500)] hover:bg-[var(--color-accent-600)] px-2.5 py-1 rounded">Save</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => setEditing(true)}
+      className="block w-full text-left text-[13.5px] leading-relaxed text-[var(--color-ink-2)] rounded-md py-1.5 px-2 -mx-2 hover:bg-[var(--color-warm-100)] dark:hover:bg-[var(--color-warm-800)] transition-colors"
+    >
+      {val || <span className="italic text-[var(--color-ink-3)]">No note yet — click to add.</span>}
+    </button>
   );
 }
 

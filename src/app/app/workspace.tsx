@@ -54,6 +54,7 @@ export function Workspace({ programs }: { programs: ProgramWithMeta[] }) {
     visa: Set<string>;
     loc: Set<string>;
     amount: Set<string>;
+    status: Set<string>;
   }>({
     tier: new Set(),
     kind: new Set(),
@@ -61,6 +62,7 @@ export function Workspace({ programs }: { programs: ProgramWithMeta[] }) {
     visa: new Set(),
     loc: new Set(),
     amount: new Set(),
+    status: new Set(),
   });
 
   const toggle = (k: keyof typeof filters, v: string) => {
@@ -76,7 +78,7 @@ export function Workspace({ programs }: { programs: ProgramWithMeta[] }) {
   const reset = () =>
     setFilters({
       tier: new Set(), kind: new Set(), dilution: new Set(),
-      visa: new Set(), loc: new Set(), amount: new Set(),
+      visa: new Set(), loc: new Set(), amount: new Set(), status: new Set(),
     });
 
   const filtered = React.useMemo(() => {
@@ -88,6 +90,7 @@ export function Workspace({ programs }: { programs: ProgramWithMeta[] }) {
       if (filters.loc.size && !filters.loc.has(p.loc)) return false;
       if (filters.amount.size && p.amount && !filters.amount.has(p.amount)) return false;
       if (filters.amount.size && !p.amount) return false;
+      if (filters.status.size && !filters.status.has(p.current_status ?? "discovered")) return false;
       return true;
     });
   }, [programs, filters]);
