@@ -11,7 +11,11 @@ export default async function WorkspacePage() {
   const { data, error } = await supa
     .from("programs")
     .select("*, status:program_status(status, changed_at), metadata")
-    .order("tier", { ascending: true });
+    // Default sort: $500K+ priority programs first, then tier, then nearest deadline.
+    // The list/timeline/board views can override; this is the baseline order.
+    .order("priority", { ascending: false })
+    .order("tier", { ascending: true })
+    .order("point_date", { ascending: true, nullsFirst: false });
 
   if (error) {
     return (
@@ -28,6 +32,7 @@ export default async function WorkspacePage() {
     amount: string | null; terms: string | null; note: string | null;
     start_date: string | null; end_date: string | null; point_date: string | null;
     rolling: boolean;
+    priority: boolean | null;
     metadata: Record<string, unknown> | null;
     status?: { status: string; changed_at: string }[];
   };
@@ -52,6 +57,7 @@ export default async function WorkspacePage() {
       end_date: p.end_date ?? undefined,
       point_date: p.point_date ?? undefined,
       rolling: p.rolling,
+      priority: !!p.priority,
       metadata: p.metadata,
       current_status: latest?.status ?? "discovered",
     };

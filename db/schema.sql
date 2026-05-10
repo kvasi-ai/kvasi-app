@@ -77,6 +77,7 @@ create table if not exists public.programs (
   end_date     date,
   point_date   date,
   rolling      boolean not null default false,
+  priority     boolean not null default false,
   custom_url   text,
   metadata     jsonb default '{}'::jsonb,
   search_tsv   tsvector generated always as (
@@ -94,6 +95,7 @@ create index if not exists idx_programs_name_trgm on public.programs using gin(n
 create index if not exists idx_programs_kind on public.programs(kind);
 create index if not exists idx_programs_tier on public.programs(tier);
 create index if not exists idx_programs_point_date on public.programs(point_date);
+create index if not exists idx_programs_priority on public.programs(priority) where priority = true;
 
 -- ── status history ───────────────────────────────────────────────────
 create table if not exists public.program_status (

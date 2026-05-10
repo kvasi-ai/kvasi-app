@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 type ProgramRow = {
   id: string; slug: string; name: string; org: string;
-  tier: number; kind: string; rolling: boolean;
+  tier: number; kind: string; rolling: boolean; priority: boolean | null;
   point_date: string | null; start_date: string | null; end_date: string | null;
   status?: { status: string; changed_at: string }[];
 };
@@ -43,10 +43,19 @@ export default async function TodayPage() {
     .filter((p) => p.point_date && new Date(p.point_date) >= now)
     .map((p) => ({ ...p, days: differenceInDays(new Date(p.point_date!), now) }))
     .filter((p) => p.days <= 60)
-    .sort((a, b) => a.days - b.days);
+    .sort((a, b) => {
+      if (!!b.priority !== !!a.priority) return (b.priority ? 1 : 0) - (a.priority ? 1 : 0);
+      return a.days - b.days;
+    });
 
-  // tier 1 + rolling — what to chase now
-  const chaseNow = programs.filter((p) => p.tier === 1 && p.rolling).slice(0, 6);
+  // tier 1 + rolling — what to chase now (priority first)
+  const chaseNow = programs
+    .filter((p) => (p.tier === 1 || p.priority) && p.rolling)
+    .sort((a, b) => {
+      if (!!b.priority !== !!a.priority) return (b.priority ? 1 : 0) - (a.priority ? 1 : 0);
+      return a.tier - b.tier;
+    })
+    .slice(0, 6);
 
   // status counts
   const statusCounts: Record<string, number> = {};

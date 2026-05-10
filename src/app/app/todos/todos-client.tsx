@@ -3,6 +3,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createBrowserClient } from "@supabase/ssr";
+import { dbWrite } from "@/lib/db-write";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { format, isPast, isToday, isTomorrow } from "date-fns";
 import {
@@ -53,8 +54,7 @@ export function TodosClient({ programs }: { programs: ProgramOpt[] }) {
 
   const add = useMutation({
     mutationFn: async (vals: { title: string; program_id: string; due_date: string | null }) => {
-      const { error } = await supa.from("todos").insert([vals]);
-      if (error) throw error;
+      await dbWrite({ table: "todos", op: "insert", values: vals });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["todos"] });
@@ -64,8 +64,7 @@ export function TodosClient({ programs }: { programs: ProgramOpt[] }) {
 
   const toggle = useMutation({
     mutationFn: async ({ id, done }: { id: string; done: boolean }) => {
-      const { error } = await supa.from("todos").update({ done }).eq("id", id);
-      if (error) throw error;
+      await dbWrite({ table: "todos", op: "update", id, values: { done } });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["todos"] }),
   });
@@ -75,8 +74,7 @@ export function TodosClient({ programs }: { programs: ProgramOpt[] }) {
       const patch: Record<string, unknown> = {};
       if (title !== undefined) patch.title = title;
       if (due_date !== undefined) patch.due_date = due_date;
-      const { error } = await supa.from("todos").update(patch).eq("id", id);
-      if (error) throw error;
+      await dbWrite({ table: "todos", op: "update", id, values: patch });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["todos"] });
@@ -86,8 +84,7 @@ export function TodosClient({ programs }: { programs: ProgramOpt[] }) {
 
   const del = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supa.from("todos").delete().eq("id", id);
-      if (error) throw error;
+      await dbWrite({ table: "todos", op: "delete", id });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["todos"] });

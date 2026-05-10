@@ -9,10 +9,13 @@ const amountLabel = (a: string | null) => AMOUNTS.find((x) => x.value === a)?.la
 const kindLabel = (k: string) => KINDS.find((x) => x.value === k)?.label ?? k;
 
 export function ListView({ programs, onOpen }: { programs: ProgramSeed[]; onOpen?: (slug: string) => void }) {
+  // Default sort: priority ($500K+ guaranteed) first, then nearest deadline, then tier.
   const sorted = [...programs].sort((a, b) => {
+    if (!!b.priority !== !!a.priority) return (b.priority ? 1 : 0) - (a.priority ? 1 : 0);
     const ad = a.point_date ? new Date(a.point_date).getTime() : a.start_date ? new Date(a.start_date).getTime() : Infinity;
     const bd = b.point_date ? new Date(b.point_date).getTime() : b.start_date ? new Date(b.start_date).getTime() : Infinity;
-    return ad - bd;
+    if (ad !== bd) return ad - bd;
+    return a.tier - b.tier;
   });
 
   return (
@@ -26,7 +29,15 @@ export function ListView({ programs, onOpen }: { programs: ProgramSeed[]; onOpen
         >
           <TierDot tier={p.tier} />
           <div className="min-w-0">
-            <div className="text-[13.5px] font-semibold tracking-tight truncate">{p.name}</div>
+            <div className="flex items-center gap-1.5">
+              {p.priority && (
+                <span
+                  title="≥$500K guaranteed funding on acceptance"
+                  className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--color-accent-500)] shrink-0"
+                />
+              )}
+              <div className="text-[13.5px] font-semibold tracking-tight truncate">{p.name}</div>
+            </div>
             <div className="text-[11.5px] text-[var(--color-ink-3)] truncate">{p.org}</div>
           </div>
           <div className="text-[12px] text-[var(--color-ink-2)] truncate">

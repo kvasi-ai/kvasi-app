@@ -30,15 +30,15 @@ export function TimelineView({ programs, onOpen }: { programs: ProgramSeed[]; on
   const todayPct = dayPct(TODAY);
 
   return (
-    <div className="overflow-hidden rounded-lg border border-[var(--color-line)] bg-[var(--color-paper-2)] shadow-[var(--shadow-1)]">
-      <div className="overflow-x-auto">
+    <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-paper-2)] shadow-[var(--shadow-1)]">
+      <div className="overflow-x-auto" style={{ overflowY: "visible" }}>
         <div
           className="grid min-w-[1100px]"
           style={{ gridTemplateColumns: "240px 1fr" }}
         >
-          {/* months header */}
-          <div />
-          <div className="grid border-b border-[var(--color-line)]" style={{ gridTemplateColumns: `repeat(${MONTHS.length}, minmax(0,1fr))` }}>
+          {/* months header — sticky to <main>'s scroll */}
+          <div className="sticky top-0 z-20 bg-[var(--color-paper-2)] border-b border-[var(--color-line)]" />
+          <div className="sticky top-0 z-20 grid border-b border-[var(--color-line)] bg-[var(--color-paper-2)]" style={{ gridTemplateColumns: `repeat(${MONTHS.length}, minmax(0,1fr))` }}>
             {MONTHS.map((m, i) => {
               const isQ = m.getMonth() % 3 === 0;
               const lbl =

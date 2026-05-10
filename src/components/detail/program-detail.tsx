@@ -3,10 +3,11 @@ import * as React from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { createBrowserClient } from "@supabase/ssr";
+import { dbWrite } from "@/lib/db-write";
 import { STATUSES, KINDS, AMOUNTS, LOCATIONS } from "@/lib/programs-data";
 
-// Untyped client for this component — quicker than fighting the generated types
-// for cross-table inserts. Safe because RLS is the actual security layer.
+// Untyped client for reads only. All writes go through dbWrite() because
+// RLS is keyed on auth.uid() but the app uses HMAC-cookie auth.
 function createClient() {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -104,24 +105,21 @@ export function ProgramDetailSheet({
 
   const addTodo = useMutation({
     mutationFn: async (title: string) => {
-      const { error } = await supa.from("todos").insert([{ program_id: program!.id, title }]);
-      if (error) throw error;
+      await dbWrite({ table: "todos", op: "insert", values: { program_id: program!.id, title } });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["todos", program?.id] }),
   });
 
   const toggleTodo = useMutation({
     mutationFn: async ({ id, done }: { id: string; done: boolean }) => {
-      const { error } = await supa.from("todos").update({ done }).eq("id", id);
-      if (error) throw error;
+      await dbWrite({ table: "todos", op: "update", id, values: { done } });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["todos", program?.id] }),
   });
 
   const delTodo = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supa.from("todos").delete().eq("id", id);
-      if (error) throw error;
+      await dbWrite({ table: "todos", op: "delete", id });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["todos", program?.id] }),
   });
@@ -143,8 +141,7 @@ export function ProgramDetailSheet({
 
   const addComment = useMutation({
     mutationFn: async (body: string) => {
-      const { error } = await supa.from("comments").insert([{ program_id: program!.id, body }]);
-      if (error) throw error;
+      await dbWrite({ table: "comments", op: "insert", values: { program_id: program!.id, body } });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["comments", program?.id] }),
   });
@@ -152,8 +149,7 @@ export function ProgramDetailSheet({
   // ── status ───────────────────────────────────────────
   const setStatus = useMutation({
     mutationFn: async (status: string) => {
-      const { error } = await supa.from("program_status").insert([{ program_id: program!.id, status }]);
-      if (error) throw error;
+      await dbWrite({ table: "program_status", op: "insert", values: { program_id: program!.id, status } });
     },
     onSuccess: (_, status) => {
       qc.invalidateQueries({ queryKey: ["programs"] });
@@ -314,7 +310,6 @@ export function ProgramDetailSheet({
 }
 
 function EditableNote({ programId, initial, onSaved }: { programId: string; initial: string; onSaved: () => void }) {
-  const supa = React.useMemo(() => createClient(), []);
   const [editing, setEditing] = React.useState(false);
   const [val, setVal] = React.useState(initial);
   React.useEffect(() => setVal(initial), [initial]);
@@ -322,11 +317,14 @@ function EditableNote({ programId, initial, onSaved }: { programId: string; init
   async function save() {
     const next = val.trim();
     if (next === initial.trim()) { setEditing(false); return; }
-    const { error } = await supa.from("programs").update({ note: next }).eq("id", programId);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Note saved");
-    setEditing(false);
-    onSaved();
+    try {
+      await dbWrite({ table: "programs", op: "update", id: programId, values: { note: next } });
+      toast.success("Note saved");
+      setEditing(false);
+      onSaved();
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   }
 
   if (editing) {

@@ -12,7 +12,7 @@ import {
   DragOverlay,
 } from "@dnd-kit/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createBrowserClient } from "@supabase/ssr";
+import { dbWrite } from "@/lib/db-write";
 import { toast } from "sonner";
 import type { Program } from "@/lib/hooks/use-programs";
 import { STATUSES } from "@/lib/programs-data";
@@ -23,13 +23,6 @@ import { GripVertical } from "lucide-react";
 
 type ProgramWithMeta = Program & { metadata?: Record<string, unknown> | null };
 
-function makeSupa() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  );
-}
-
 export function BoardView({
   programs,
   onOpen,
@@ -38,7 +31,6 @@ export function BoardView({
   onOpen?: (slug: string) => void;
 }) {
   const qc = useQueryClient();
-  const supa = React.useMemo(makeSupa, []);
   const [activeId, setActiveId] = React.useState<string | null>(null);
   // optimistic state — local override of current_status before server confirms
   const [override, setOverride] = React.useState<Record<string, string>>({});
@@ -49,8 +41,7 @@ export function BoardView({
 
   const setStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await supa.from("program_status").insert([{ program_id: id, status }]);
-      if (error) throw error;
+      await dbWrite({ table: "program_status", op: "insert", values: { program_id: id, status } });
     },
     onSuccess: (_, vars) => {
       const lbl = STATUSES.find((s) => s.value === vars.status)?.label ?? vars.status;
@@ -99,7 +90,7 @@ export function BoardView({
 
   return (
     <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
-      <div className="overflow-x-auto -mx-1 px-1">
+      <div className="overflow-x-auto -mx-1 px-1" style={{ overflowY: "visible" }}>
         <div className="flex gap-3 min-w-max pb-2">
           {groups.map((g) => (
             <Column key={g.value} value={g.value} label={g.label} tone={g.tone as never} count={g.items.length}>
@@ -135,7 +126,7 @@ function Column({
   const { setNodeRef, isOver } = useDroppable({ id: `col-${value}` });
   return (
     <div ref={setNodeRef} className={cn("w-[300px] flex-shrink-0 rounded-xl transition-colors", isOver && "bg-[var(--color-warm-100)] dark:bg-[var(--color-warm-800)]/40 ring-1 ring-[var(--color-accent-500)]")}>
-      <div className="flex items-center justify-between px-1 mb-2 sticky top-0 z-[1]">
+      <div className="flex items-center justify-between px-1 py-2 mb-2 sticky top-0 z-20 bg-[var(--color-paper)]/95 backdrop-blur supports-[backdrop-filter]:bg-[var(--color-paper)]/75">
         <div className="flex items-center gap-2">
           <Badge tone={tone}>{label}</Badge>
           <span className="text-[11px] text-[var(--color-ink-3)] tabular-nums">{count}</span>

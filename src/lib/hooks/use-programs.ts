@@ -14,6 +14,7 @@ type ProgramRow = {
   amount: string | null; terms: string | null; note: string | null;
   start_date: string | null; end_date: string | null; point_date: string | null;
   rolling: boolean;
+  priority: boolean | null;
   status?: { status: string; changed_at: string }[];
 };
 
@@ -50,6 +51,7 @@ export function usePrograms() {
           end_date: p.end_date ?? undefined,
           point_date: p.point_date ?? undefined,
           rolling: p.rolling,
+          priority: !!p.priority,
           current_status: latest?.status ?? "discovered",
         };
       });
