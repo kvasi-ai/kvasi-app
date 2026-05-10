@@ -4,6 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { createBrowserClient } from "@supabase/ssr";
 import { dbWrite } from "@/lib/db-write";
+import { DeleteProgramButton } from "@/components/program/delete-button";
 import { STATUSES, KINDS, AMOUNTS, LOCATIONS } from "@/lib/programs-data";
 
 // Untyped client for reads only. All writes go through dbWrite() because
@@ -190,6 +191,13 @@ export function ProgramDetailSheet({
                   </a>
                 </Button>
               )}
+              <DeleteProgramButton
+                programId={program.id}
+                programName={program.name}
+                variant="icon"
+                onDeleted={onClose}
+                className="h-8 w-8"
+              />
               <Button variant="ghost" size="icon" onClick={onClose}>
                 <X className="h-4 w-4" />
               </Button>

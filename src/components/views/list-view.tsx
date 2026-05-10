@@ -4,11 +4,14 @@ import { TierDot } from "@/components/program/status-pill";
 import { Badge } from "@/components/ui/badge";
 import { ChevronRight } from "lucide-react";
 import { AMOUNTS, KINDS } from "@/lib/programs-data";
+import { DeleteProgramButton } from "@/components/program/delete-button";
 
 const amountLabel = (a: string | null) => AMOUNTS.find((x) => x.value === a)?.label ?? "";
 const kindLabel = (k: string) => KINDS.find((x) => x.value === k)?.label ?? k;
 
-export function ListView({ programs, onOpen }: { programs: ProgramSeed[]; onOpen?: (slug: string) => void }) {
+type ProgramRow = ProgramSeed & { id: string };
+
+export function ListView({ programs, onOpen }: { programs: ProgramRow[]; onOpen?: (slug: string) => void }) {
   // Default sort: priority ($500K+ guaranteed) first, then nearest deadline, then tier.
   const sorted = [...programs].sort((a, b) => {
     if (!!b.priority !== !!a.priority) return (b.priority ? 1 : 0) - (a.priority ? 1 : 0);
@@ -21,11 +24,19 @@ export function ListView({ programs, onOpen }: { programs: ProgramSeed[]; onOpen
   return (
     <div className="space-y-2">
       {sorted.map((p) => (
-        <button
-          key={p.slug}
+        <div
+          key={p.id ?? p.slug}
+          role="button"
+          tabIndex={0}
           onClick={() => onOpen?.(p.slug)}
-          className="group w-full text-left grid items-center gap-4 rounded-lg border border-[var(--color-line)] bg-[var(--color-paper-2)] px-4 py-3.5 transition-all duration-150 hover:border-[var(--color-warm-400)] hover:translate-x-0.5 hover:shadow-[var(--shadow-1)]"
-          style={{ gridTemplateColumns: "16px 1.6fr 1fr 1fr 100px 16px" }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onOpen?.(p.slug);
+            }
+          }}
+          className="group w-full text-left grid items-center gap-4 rounded-lg border border-[var(--color-line)] bg-[var(--color-paper-2)] px-4 py-3.5 transition-all duration-150 hover:border-[var(--color-warm-400)] hover:translate-x-0.5 hover:shadow-[var(--shadow-1)] cursor-pointer focus:outline-none focus:border-[var(--color-accent-500)]"
+          style={{ gridTemplateColumns: "16px 1.6fr 1fr 1fr 100px 24px 24px" }}
         >
           <TierDot tier={p.tier} />
           <div className="min-w-0">
@@ -56,8 +67,21 @@ export function ListView({ programs, onOpen }: { programs: ProgramSeed[]; onOpen
               </Badge>
             )}
           </div>
+          <span
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            {p.id ? (
+              <DeleteProgramButton
+                programId={p.id}
+                programName={p.name}
+                variant="icon"
+                className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
+              />
+            ) : null}
+          </span>
           <ChevronRight className="h-4 w-4 text-[var(--color-ink-3)] group-hover:text-[var(--color-accent-500)] transition-colors" />
-        </button>
+        </div>
       ))}
     </div>
   );

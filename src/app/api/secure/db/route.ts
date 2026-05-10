@@ -31,7 +31,7 @@ const ALLOW: Record<string, { ops: Op[]; cols: string[]; idCol?: string }> = {
     idCol: "id",
   },
   programs: {
-    ops: ["update"],
+    ops: ["update", "delete"],
     // Only fields users edit inline — never tier/priority/slug from client.
     cols: ["note", "terms"],
     idCol: "id",

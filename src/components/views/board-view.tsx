@@ -20,6 +20,7 @@ import { TierDot } from "@/components/program/status-pill";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { GripVertical } from "lucide-react";
+import { DeleteProgramButton } from "@/components/program/delete-button";
 
 type ProgramWithMeta = Program & { metadata?: Record<string, unknown> | null };
 
@@ -169,6 +170,12 @@ function Card({
         >
           <CardContent program={program} />
         </button>
+        <DeleteProgramButton
+          programId={program.id}
+          programName={program.name}
+          variant="icon"
+          className="opacity-0 group-hover:opacity-100 transition-opacity -mr-1"
+        />
       </div>
     </div>
   );
