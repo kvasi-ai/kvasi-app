@@ -300,3 +300,30 @@ end $$;
 
 alter publication supabase_realtime add table public.entities;
 alter publication supabase_realtime add table public.entity_links;
+
+-- ─────────────────────────────────────────────────────────────────────
+-- APP_USERS — per-user login tracking (separate from Supabase auth.users).
+-- Three seeded rows for the founding team. last_seen ticked by heartbeat.
+-- See db/migrations/004_app_users.sql for the equivalent migration.
+-- ─────────────────────────────────────────────────────────────────────
+create table if not exists public.app_users (
+  username      text primary key,
+  display_name  text not null,
+  color         text not null default '#E55A2B',
+  last_seen     timestamptz,
+  login_count   integer not null default 0,
+  created_at    timestamptz not null default now()
+);
+
+insert into public.app_users (username, display_name, color) values
+  ('anuj',    'Anuj',    '#E55A2B'),
+  ('shreyas', 'Shreyas', '#5BA3E5'),
+  ('niketan', 'Niketan', '#7BC97B')
+on conflict (username) do nothing;
+
+alter table public.app_users enable row level security;
+do $$ begin
+  drop policy if exists "app_users_r" on public.app_users;
+  create policy "app_users_r" on public.app_users for select using (true);
+end $$;
+alter publication supabase_realtime add table public.app_users;

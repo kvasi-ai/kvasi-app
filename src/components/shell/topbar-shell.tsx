@@ -3,12 +3,13 @@ import { useTheme } from "next-themes";
 import { Search, Moon, SunMedium, Bell } from "lucide-react";
 import { Kbd } from "@/components/ui/kbd";
 import { Button } from "@/components/ui/button";
+import { PresenceStrip } from "@/components/shell/presence-strip";
 
 function triggerCommand() {
   window.dispatchEvent(new CustomEvent("command:open"));
 }
 
-export function TopbarShell() {
+export function TopbarShell({ me }: { me: string | null }) {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const isDark = (resolvedTheme ?? theme) === "dark";
 
@@ -26,20 +27,20 @@ export function TopbarShell() {
         </span>
       </button>
 
-      <div className="ml-auto flex items-center gap-1.5">
-        <Button variant="ghost" size="icon" aria-label="Notifications">
-          <Bell className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Toggle theme"
-          onClick={() => setTheme(isDark ? "light" : "dark")}
-        >
-          {isDark ? <SunMedium className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </Button>
-        <div className="grid h-7 w-7 place-items-center rounded-full bg-[var(--color-accent-500)] text-white text-[11px] font-semibold ml-1">
-          AZ
+      <div className="ml-auto flex items-center gap-3">
+        <PresenceStrip me={me} />
+        <div className="flex items-center gap-1.5">
+          <Button variant="ghost" size="icon" aria-label="Notifications">
+            <Bell className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Toggle theme"
+            onClick={() => setTheme(isDark ? "light" : "dark")}
+          >
+            {isDark ? <SunMedium className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
         </div>
       </div>
     </header>
