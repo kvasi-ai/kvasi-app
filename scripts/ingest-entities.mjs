@@ -21,11 +21,15 @@ import { resolve, join, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 import { createClient } from "@supabase/supabase-js";
-import "dotenv/config";
+import dotenv from "dotenv";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..", "..");                // D:\KVASI
 const APP = resolve(__dirname, "..");                       // D:\KVASI\app
+
+// Next.js convention — load .env.local first, fall back to .env.
+dotenv.config({ path: join(APP, ".env.local") });
+dotenv.config({ path: join(APP, ".env") });
 const DIR_RCD = join(ROOT, "robotics-companies-directory");
 const DIR_VC = join(ROOT, "research", "program_details");
 
@@ -77,26 +81,29 @@ function ingestVcs() {
     const path = join(DIR_VC, file);
     if (!existsSync(path)) { console.warn(`[vcs] missing: ${file}`); continue; }
     const j = JSON.parse(readFileSync(path, "utf8"));
-    const list = j.funds ?? j.vcs ?? [];
+    const list = j.funds ?? j.vcs ?? j.programs ?? j.investors ?? [];
     for (const v of list) {
+      const tips = v.approach_tips ?? v.tips ?? [];
       out.push({
         type: "investor",
         slug: v.slug ?? slugify(v.name),
         name: v.name,
         org: v.name,
         properties: {
-          official_url: v.official_url,
-          contact_url: v.contact_url,
-          contact_method: v.contact_method,
-          contact_email: v.contact_email,
-          deadline: v.deadline,
-          fund_size: v.fund_size,
-          check_size: v.check_size,
-          accepts_cold_pitches: v.accepts_cold_pitches,
-          approach_tips: v.approach_tips,
+          official_url: v.official_url ?? v.url ?? null,
+          contact_url: v.contact_url ?? v.submission_portal ?? null,
+          contact_method: v.contact_method ?? null,
+          contact_email: v.contact_email ?? null,
+          deadline: v.deadline ?? v.next_deadline ?? null,
+          fund_size: v.fund_size ?? null,
+          check_size: v.check_size ?? null,
+          stage: v.stage ?? null,
+          thesis: v.thesis ?? v.focus ?? null,
+          accepts_cold_pitches: v.accepts_cold_pitches ?? null,
+          approach_tips: tips.length ? tips : null,
           category: j.category,
         },
-        note: (v.approach_tips ?? []).map((t) => `- ${t}`).join("\n"),
+        note: tips.length ? tips.map((t) => `- ${t}`).join("\n") : (v.notes ?? v.description ?? null),
         source: file,
       });
     }
