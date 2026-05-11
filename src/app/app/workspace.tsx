@@ -31,76 +31,66 @@ const VISAS = [
 
 type ProgramWithMeta = Program & { metadata?: Record<string, unknown> | null };
 
+const FILTER_KEYS = ["tier", "kind", "dilution", "visa", "loc", "amount", "status"] as const;
+type FilterKey = (typeof FILTER_KEYS)[number];
+type FilterState = Record<FilterKey, Set<string>>;
+
+function emptyFilters(): FilterState {
+  return {
+    tier: new Set(), kind: new Set(), dilution: new Set(),
+    visa: new Set(), loc: new Set(), amount: new Set(), status: new Set(),
+  };
+}
+
+function filtersFromSearchParams(sp: URLSearchParams): FilterState {
+  const out = emptyFilters();
+  FILTER_KEYS.forEach((key) => {
+    const v = sp.get(key);
+    if (v) v.split(",").forEach((x) => x && out[key].add(x));
+  });
+  return out;
+}
+
+function isView(v: string | null): v is View {
+  return v === "timeline" || v === "board" || v === "list";
+}
+
 export function Workspace({ programs }: { programs: ProgramWithMeta[] }) {
   const sp = useSearchParams();
   const router = useRouter();
-  const [view, setView] = React.useState<View>("timeline");
   const [legendRef] = useAutoAnimate<HTMLDivElement>();
 
-  // open detail panel via ?open=slug query (from sidebar/inbox/today links)
+  // ── URL-synced state (survives reload + deep-linkable) ──────────────────
+  const view: View = isView(sp.get("view")) ? (sp.get("view") as View) : "timeline";
+  const filters = React.useMemo(() => filtersFromSearchParams(new URLSearchParams(sp.toString())), [sp]);
   const openSlug = sp.get("open");
 
-  // sync filter state from query params (from command palette deep-links)
-  React.useEffect(() => {
-    const next = {
-      tier: new Set<string>(),
-      kind: new Set<string>(),
-      dilution: new Set<string>(),
-      visa: new Set<string>(),
-      loc: new Set<string>(),
-      amount: new Set<string>(),
-      status: new Set<string>(),
-    };
-    (["tier", "kind", "dilution", "visa", "loc", "amount", "status"] as const).forEach((key) => {
-      const v = sp.get(key);
-      if (v) v.split(",").forEach((x) => next[key].add(x));
-    });
-    setFilters(next);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sp.toString()]);
-  const setOpenSlug = React.useCallback(
-    (slug: string | null) => {
+  // Helper: replace one or more URL params without touching the rest.
+  const patchUrl = React.useCallback(
+    (patch: Record<string, string | null>) => {
       const next = new URLSearchParams(sp.toString());
-      if (slug) next.set("open", slug);
-      else next.delete("open");
-      router.replace(`?${next.toString()}`, { scroll: false });
+      for (const [k, v] of Object.entries(patch)) {
+        if (v == null || v === "") next.delete(k);
+        else next.set(k, v);
+      }
+      const qs = next.toString();
+      router.replace(qs ? `?${qs}` : "?", { scroll: false });
     },
     [sp, router],
   );
 
-  const [filters, setFilters] = React.useState<{
-    tier: Set<string>;
-    kind: Set<string>;
-    dilution: Set<string>;
-    visa: Set<string>;
-    loc: Set<string>;
-    amount: Set<string>;
-    status: Set<string>;
-  }>({
-    tier: new Set(),
-    kind: new Set(),
-    dilution: new Set(),
-    visa: new Set(),
-    loc: new Set(),
-    amount: new Set(),
-    status: new Set(),
-  });
+  const setView = (v: View) => patchUrl({ view: v === "timeline" ? null : v });
+  const setOpenSlug = (slug: string | null) => patchUrl({ open: slug });
 
-  const toggle = (k: keyof typeof filters, v: string) => {
-    setFilters((prev) => {
-      const next = { ...prev, [k]: new Set(prev[k]) };
-      if (next[k].has(v)) next[k].delete(v);
-      else next[k].add(v);
-      return next;
-    });
+  const toggle = (k: FilterKey, v: string) => {
+    const cur = new Set(filters[k]);
+    if (cur.has(v)) cur.delete(v);
+    else cur.add(v);
+    patchUrl({ [k]: cur.size ? Array.from(cur).join(",") : null });
   };
 
   const hasFilters = Object.values(filters).some((s) => s.size > 0);
-  const reset = () =>
-    setFilters({
-      tier: new Set(), kind: new Set(), dilution: new Set(),
-      visa: new Set(), loc: new Set(), amount: new Set(), status: new Set(),
-    });
+  const reset = () => patchUrl(Object.fromEntries(FILTER_KEYS.map((k) => [k, null])));
 
   const filtered = React.useMemo(() => {
     return programs.filter((p) => {
