@@ -9,12 +9,14 @@ import {
   Inbox,
   Settings,
   Sparkles,
+  Network,
 } from "lucide-react";
 
 const NAV: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; hint?: string }[] = [
   { href: "/app/today",    label: "Today",    icon: Sparkles,        hint: "G T" },
   { href: "/app",          label: "Programs", icon: LayoutDashboard, hint: "G P" },
   { href: "/app/calendar", label: "Calendar", icon: CalendarDays,    hint: "G C" },
+  { href: "/app/network",  label: "Network",  icon: Network,         hint: "G N" },
   { href: "/app/todos",    label: "My todos", icon: ListTodo,        hint: "G M" },
   { href: "/app/inbox",    label: "Inbox",    icon: Inbox,           hint: "G I" },
 ];

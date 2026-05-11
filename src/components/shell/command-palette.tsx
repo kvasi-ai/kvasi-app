@@ -17,6 +17,7 @@ import {
   Sun,
   Moon,
   LogOut,
+  Network,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Kbd } from "@/components/ui/kbd";
@@ -79,6 +80,9 @@ export function CommandPalette({
   useHotkeys("i", () => {
     if (Date.now() - lastG.current < 1000) { r.push("/app/inbox"); lastG.current = 0; }
   }, []);
+  useHotkeys("n", () => {
+    if (Date.now() - lastG.current < 1000) { r.push("/app/network"); lastG.current = 0; }
+  }, []);
   useHotkeys("s", () => {
     if (Date.now() - lastG.current < 1000) { r.push("/app/settings"); lastG.current = 0; }
   }, []);
@@ -133,6 +137,7 @@ export function CommandPalette({
             <Item icon={<Sparkles className="h-3.5 w-3.5" />} label="Today" hint="G T" onSelect={() => go("/app/today")} />
             <Item icon={<LayoutDashboard className="h-3.5 w-3.5" />} label="Programs" hint="G P" onSelect={() => go("/app")} />
             <Item icon={<CalendarDays className="h-3.5 w-3.5" />} label="Calendar" hint="G C" onSelect={() => go("/app/calendar")} />
+            <Item icon={<Network className="h-3.5 w-3.5" />} label="Network" hint="G N" onSelect={() => go("/app/network")} />
             <Item icon={<ListTodo className="h-3.5 w-3.5" />} label="My todos" hint="G M" onSelect={() => go("/app/todos")} />
             <Item icon={<Inbox className="h-3.5 w-3.5" />} label="Inbox" hint="G I" onSelect={() => go("/app/inbox")} />
             <Item icon={<Settings className="h-3.5 w-3.5" />} label="Settings" hint="G S" onSelect={() => go("/app/settings")} />
