@@ -82,6 +82,21 @@ export default function SettingsPage() {
         </a>
       </Section>
 
+      <Section
+        label="Identity"
+        desc="Who you appear as in the topbar presence strip. Clearing it pops the picker again."
+      >
+        <Button
+          variant="outline"
+          onClick={async () => {
+            await fetch("/api/auth/identity", { method: "DELETE" });
+            r.refresh();
+          }}
+        >
+          Switch user
+        </Button>
+      </Section>
+
       <Section label="Session">
         <Button variant="outline" onClick={logout}>
           <LogOut className="h-3.5 w-3.5" /> Sign out

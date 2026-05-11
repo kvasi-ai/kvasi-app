@@ -4,7 +4,8 @@ import { Sidebar } from "@/components/shell/sidebar";
 import { TopbarShell } from "@/components/shell/topbar-shell";
 import { CommandPalette } from "@/components/shell/command-palette";
 import { RealtimeBridge } from "@/components/shell/realtime-bridge";
-import { SESSION_COOKIE, getSessionUser } from "@/lib/auth";
+import { IdentityPicker } from "@/components/shell/identity-picker";
+import { WHO_COOKIE, isAppUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const programs = (data ?? []) as { id: string; slug: string; name: string; org: string }[];
 
   const jar = await cookies();
-  const me = await getSessionUser(jar.get(SESSION_COOKIE)?.value, process.env.APP_AUTH_SECRET ?? "");
+  const whoRaw = jar.get(WHO_COOKIE)?.value;
+  const me = isAppUser(whoRaw) ? whoRaw : null;
 
   return (
     <div className="flex h-screen bg-[var(--color-paper)]">
@@ -25,6 +27,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </div>
       <CommandPalette programs={programs} />
       <RealtimeBridge />
+      <IdentityPicker currentUser={me} />
     </div>
   );
 }

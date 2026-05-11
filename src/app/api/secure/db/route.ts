@@ -9,7 +9,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { admin } from "@/lib/supabase/admin";
-import { SESSION_COOKIE, verifySessionToken, getSessionUser } from "@/lib/auth";
+import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
