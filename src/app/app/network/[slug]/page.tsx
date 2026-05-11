@@ -108,9 +108,14 @@ export default async function EntityDetailPage({ params }: { params: Promise<{ s
               </ul>
             </section>
           )}
+
+          {/* LOCAL GRAPH — full-width, below references */}
+          <section className="mt-8">
+            <EntityDetailClient entityId={e.id} slug={e.slug} />
+          </section>
         </div>
 
-        {/* SIDEBAR: backlinks */}
+        {/* SIDEBAR: backlinks (compact, sticky) */}
         <aside>
           <div className="sticky top-4">
             <h3 className="text-[11px] tracking-[0.14em] uppercase text-[var(--color-ink-3)] font-medium mb-2">
@@ -121,7 +126,7 @@ export default async function EntityDetailPage({ params }: { params: Promise<{ s
                 No incoming references yet.
               </div>
             ) : (
-              <ul className="rounded-xl border border-[var(--color-line)] bg-[var(--color-paper-2)] divide-y divide-[var(--color-line)]">
+              <ul className="rounded-xl border border-[var(--color-line)] bg-[var(--color-paper-2)] divide-y divide-[var(--color-line)] max-h-[70vh] overflow-auto">
                 {inc.map((r) => (
                   <li key={r.id}>
                     <Link
@@ -146,7 +151,6 @@ export default async function EntityDetailPage({ params }: { params: Promise<{ s
                 ))}
               </ul>
             )}
-            <EntityDetailClient entityId={e.id} slug={e.slug} />
           </div>
         </aside>
       </div>
